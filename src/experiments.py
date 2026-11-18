@@ -1,6 +1,9 @@
 import os
 import sys
-sys.path.insert(0, ".")
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -10,6 +13,11 @@ from sklearn.naive_bayes import MultinomialNB
 from src.data_loader import load_data
 from src.feature_extraction import split_data, extract_bow_features
 from src.evaluate import calculate_metrics
+
+fig_dir = PROJECT_ROOT / "reports" / "figures"
+res_dir = PROJECT_ROOT / "reports" / "results"
+os.makedirs(fig_dir, exist_ok=True)
+os.makedirs(res_dir, exist_ok=True)
 
 def run_vocab_size_experiment():
     """Experiment 2: Effect of vocabulary size on Multinomial Naive Bayes."""
@@ -30,7 +38,7 @@ def run_vocab_size_experiment():
         records.append(m)
 
     res_df = pd.DataFrame(records)
-    res_df.to_csv("reports/results/experiment_vocab_size.csv", index=False)
+    res_df.to_csv(res_dir / "experiment_vocab_size.csv", index=False)
 
     plt.figure(figsize=(7, 4))
     plt.plot(res_df["Vocab Size"], res_df["F1-Score"], marker="o", color="#2b5c8f")
@@ -39,7 +47,7 @@ def run_vocab_size_experiment():
     plt.ylabel("F1-Score")
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("reports/figures/07_vocab_size_comparison.png", dpi=200)
+    plt.savefig(fig_dir / "07_vocab_size_comparison.png", dpi=200)
     plt.close()
     return res_df
 
@@ -62,14 +70,14 @@ def run_preprocessing_experiment():
         records.append(m)
 
     res_df = pd.DataFrame(records)
-    res_df.to_csv("reports/results/experiment_preprocessing.csv", index=False)
+    res_df.to_csv(res_dir / "experiment_preprocessing.csv", index=False)
 
     plt.figure(figsize=(7, 4))
     sns.barplot(data=res_df, x="Strategy", y="F1-Score", color="#2b5c8f")
     plt.title("Preprocessing Strategy vs F1-Score")
     plt.ylim(0.85, 1.0)
     plt.tight_layout()
-    plt.savefig("reports/figures/08_preprocessing_comparison.png", dpi=200)
+    plt.savefig(fig_dir / "08_preprocessing_comparison.png", dpi=200)
     plt.close()
     return res_df
 
@@ -92,7 +100,7 @@ def run_misclassification_analysis():
     errors["error_type"] = errors.apply(
         lambda r: "False Positive (Ham as Spam)" if r["actual"] == 0 else "False Negative (Spam as Ham)", axis=1
     )
-    errors.to_csv("reports/results/misclassifications.csv", index=False)
+    errors.to_csv(res_dir / "misclassifications.csv", index=False)
     print(f"Total misclassifications: {len(errors)}")
     return errors
 

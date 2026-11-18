@@ -1,16 +1,37 @@
 import os
+from pathlib import Path
 import pandas as pd
 
-def load_data(filepath="dataset/spam.csv"):
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+def load_data(filepath=None):
     """Load the dataset and return a cleaned dataframe."""
-    if not os.path.exists(filepath):
-        alt_path = "dataset/SMSSpamCollection"
-        if os.path.exists(alt_path):
-            df = pd.read_csv(alt_path, sep="\t", names=["label", "message"], encoding="utf-8")
-        else:
-            raise FileNotFoundError(f"Dataset not found at {filepath} or {alt_path}")
+    if filepath is None:
+        candidates = [
+            Path("dataset/spam.csv"),
+            Path("dataset/SMSSpamCollection"),
+            PROJECT_ROOT / "dataset" / "spam.csv",
+            PROJECT_ROOT / "dataset" / "SMSSpamCollection",
+        ]
+        target = None
+        for p in candidates:
+            if p.exists():
+                target = p
+                break
+        if target is None:
+            raise FileNotFoundError(f"Dataset not found. Checked: {[str(p) for p in candidates]}")
     else:
-        df = pd.read_csv(filepath, encoding="utf-8")
+        target = Path(filepath)
+        if not target.exists():
+            if (PROJECT_ROOT / filepath).exists():
+                target = PROJECT_ROOT / filepath
+            else:
+                raise FileNotFoundError(f"Dataset not found at {filepath}")
+
+    if target.suffix == ".csv":
+        df = pd.read_csv(target, encoding="utf-8")
+    else:
+        df = pd.read_csv(target, sep="\t", names=["label", "message"], encoding="utf-8")
 
     # Rename columns if needed
     if "v1" in df.columns and "v2" in df.columns:
@@ -28,12 +49,13 @@ def load_data(filepath="dataset/spam.csv"):
 
 # Alias for backwards compatibility
 load_raw_data = load_data
-def clean_dataset(df):
+
+def clean_dataset(df=None):
     clean_df = load_data()
     stats = {
         "total_messages": len(clean_df),
-        "ham_count": (clean_df["label_num"] == 0).sum(),
-        "spam_count": (clean_df["label_num"] == 1).sum(),
+        "ham_count": int((clean_df["label_num"] == 0).sum()),
+        "spam_count": int((clean_df["label_num"] == 1).sum()),
     }
     return clean_df, stats
 

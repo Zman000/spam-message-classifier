@@ -4,12 +4,16 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 
 def calculate_metrics(y_true, y_pred, model_name="Model"):
     """Compute standard classification metrics."""
+    cm = confusion_matrix(y_true, y_pred)
+    tn, fp, fn, tp = cm.ravel()
     return {
         "Model": model_name,
         "Accuracy": round(accuracy_score(y_true, y_pred), 4),
         "Precision": round(precision_score(y_true, y_pred, zero_division=0), 4),
         "Recall": round(recall_score(y_true, y_pred, zero_division=0), 4),
         "F1-Score": round(f1_score(y_true, y_pred, zero_division=0), 4),
+        "False Positives": int(fp),
+        "False Negatives": int(fn),
     }
 
 def plot_confusion_matrix(y_true, y_pred, title, save_path=None):

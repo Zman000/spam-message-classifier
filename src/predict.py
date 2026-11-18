@@ -1,14 +1,20 @@
 import os
 import sys
-sys.path.insert(0, ".")
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
 import joblib
+from src.preprocessing import clean_text
 
-MODEL_PATH = "models/best_model.pkl"
+MODEL_PATH = PROJECT_ROOT / "models" / "best_model.pkl"
 _model = None
 
-def load_model(path=MODEL_PATH):
+def load_model(path=None):
     global _model
+    if path is None:
+        path = MODEL_PATH
     if _model is None:
         if not os.path.exists(path):
             raise FileNotFoundError(f"Model not found at {path}. Run train.py first.")

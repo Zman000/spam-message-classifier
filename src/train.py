@@ -1,6 +1,9 @@
 import os
 import sys
-sys.path.insert(0, ".")
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
 import joblib
 import pandas as pd
@@ -35,9 +38,12 @@ def train_models():
     }
 
     results = []
-    os.makedirs("reports/figures", exist_ok=True)
-    os.makedirs("reports/results", exist_ok=True)
-    os.makedirs("models", exist_ok=True)
+    fig_dir = PROJECT_ROOT / "reports" / "figures"
+    res_dir = PROJECT_ROOT / "reports" / "results"
+    mod_dir = PROJECT_ROOT / "models"
+    os.makedirs(fig_dir, exist_ok=True)
+    os.makedirs(res_dir, exist_ok=True)
+    os.makedirs(mod_dir, exist_ok=True)
 
     # 4. Train and evaluate each model
     for name, model in models.items():
@@ -49,10 +55,10 @@ def train_models():
 
         # Save confusion matrix plot
         slug = name.lower().replace(" ", "_")
-        plot_confusion_matrix(y_test, y_pred, name, save_path=f"reports/figures/cm_{slug}.png")
+        plot_confusion_matrix(y_test, y_pred, name, save_path=fig_dir / f"cm_{slug}.png")
 
     results_df = pd.DataFrame(results)
-    results_df.to_csv("reports/results/model_comparison.csv", index=False)
+    results_df.to_csv(res_dir / "model_comparison.csv", index=False)
     print("\n--- Model Evaluation Results ---")
     print(results_df.to_string(index=False))
 
@@ -62,8 +68,8 @@ def train_models():
         ("classifier", MultinomialNB())
     ])
     best_pipeline.fit(X_train, y_train)
-    joblib.dump(best_pipeline, "models/best_model.pkl")
-    print("\nSaved best model pipeline to models/best_model.pkl")
+    joblib.dump(best_pipeline, mod_dir / "best_model.pkl")
+    print(f"\nSaved best model pipeline to {mod_dir / 'best_model.pkl'}")
 
     # 6. Save comparison bar chart
     plt.figure(figsize=(8, 4))
@@ -71,15 +77,14 @@ def train_models():
     plt.title("Model Comparison (F1-Score)")
     plt.ylim(0.7, 1.0)
     plt.tight_layout()
-    plt.savefig("reports/figures/06_model_comparison.png", dpi=200)
+    plt.savefig(fig_dir / "06_model_comparison.png", dpi=200)
     plt.close()
 
-    return results_df
+    return results_df, models, best_pipeline
 
 # Alias for notebook compatibility
 def train_and_evaluate_all():
-    comp_df = train_models()
-    return comp_df, None, None
+    return train_models()
 
 if __name__ == "__main__":
     train_models()
